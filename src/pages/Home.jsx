@@ -22,13 +22,13 @@ const TodoInputArea = styled.div`
 `;
 const TodoInput = styled.input`
   padding: 0.5rem;
+  width: 100%;
 `;
 const TodoListArea = styled.div`
   padding: 0.25rem;
 `;
 const TodoItem = styled.div`
   display: flex;
-  align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0;
   &:not(:last-child) {
@@ -52,7 +52,18 @@ const TodoItemChecked = styled.div`
   }
 `;
 const TodoItemText = styled.span`
+  display: inline-block;
+  height: inherit;
+  line-height: 2;
   font-size: 0.875rem;
+  flex: 1;
+  word-break: break-all;
+  ${({ checked }) => checked && "text-decoration: line-through; color:#888;"}
+`;
+const TodoItemDeleteButton = styled.button`
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border: 1px solid #eee;
 `;
 
 export function Home() {
@@ -79,6 +90,31 @@ export function Home() {
       todo.todoChecked = !todo.todoChecked;
       setTodos([...todos]);
     }),
+    todoItemDeleteButtonClick: useCallback(({ todo }) => {
+      const excepTodos = todos.filter((filterTodo) => filterTodo !== todo);
+      setTodos([...excepTodos]);
+    }),
+    todoItemTextClick: useCallback(({ event }) => {
+      event.target.contentEditable = true;
+      event.target.focus();
+      console.log(1);
+    }),
+    todoItemTextBlur: useCallback(({ todo, event }) => {
+      event.target.contentEditable = false;
+      todo.todoName = event.target.textContent;
+      setTodos([...todos]);
+    }),
+    todoItemTextKeyDown: useCallback(({ todo, event }) => {
+      const isEdit = event.keyCode === 13;
+      const inputValue = event.target.textContent;
+      if (isEdit && inputValue) {
+        event.target.contentEditable = false;
+        todo.todoName = inputValue;
+        setTodos([...todos]);
+      } else if (isEdit && !inputValue) {
+        todoItemHandlers.todoItemDeleteButtonClick({ todo });
+      }
+    }),
   };
 
   return (
@@ -98,7 +134,17 @@ export function Home() {
                 checked={todo.todoChecked}
                 onClick={() => todoItemHandlers.todoItemCheckedToggle({ todo })}
               ></TodoItemChecked>
-              <TodoItemText>{todo.todoName}</TodoItemText>
+              <TodoItemText
+                checked={todo.todoChecked}
+                onClick={(event) => todoItemHandlers.todoItemTextClick({ todo, event })}
+                onBlur={(event) => todoItemHandlers.todoItemTextBlur({ todo, event })}
+                onKeyDown={(event) => todoItemHandlers.todoItemTextKeyDown({ todo, event })}
+              >
+                {todo.todoName}
+              </TodoItemText>
+              <TodoItemDeleteButton onClick={() => todoItemHandlers.todoItemDeleteButtonClick({ todo })}>
+                delete
+              </TodoItemDeleteButton>
             </TodoItem>
           ))}
         </TodoListArea>
